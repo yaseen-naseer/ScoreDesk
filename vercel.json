@@ -1,0 +1,25 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@scoredesk-supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@scoredesk-supabase-anon-key"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SUPABASE_URL": "@scoredesk-supabase-url",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@scoredesk-supabase-anon-key"
+    }
+  },
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["iad1"],
+  "github": {
+    "autoAlias": false
+  }
+}

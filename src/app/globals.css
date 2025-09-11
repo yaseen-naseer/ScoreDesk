@@ -1,26 +1,94 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* ScoreDesk Light Theme - Sports Field Inspired */
+    --background: 0 0% 100%;
+    --foreground: 210 40% 2%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 2%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 2%;
+    --primary: 142 76% 36%; /* Football field green */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 98%;
+    --secondary-foreground: 210 40% 20%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 210 40% 45%;
+    --accent: 45 100% 51%; /* Referee yellow */
+    --accent-foreground: 210 40% 2%;
+    --destructive: 0 84% 60%; /* Red card red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 92%;
+    --input: 210 40% 96%;
+    --ring: 142 76% 36%;
+    --success: 142 76% 36%; /* Goal green */
+    --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%; /* Yellow card */
+    --warning-foreground: 210 40% 2%;
+    --info: 221 83% 53%; /* Sky blue */
+    --info-foreground: 0 0% 98%;
+    /* Chart colors for statistics */
+    --chart-1: 142 76% 36%; /* Green */
+    --chart-2: 221 83% 53%; /* Blue */
+    --chart-3: 45 100% 51%; /* Yellow */
+    --chart-4: 0 84% 60%; /* Red */
+    --chart-5: 271 81% 56%; /* Purple */
+    --radius: 0.75rem;
+    /* Match status colors */
+    --live: 0 84% 60%; /* Live red */
+    --scheduled: 210 40% 45%; /* Scheduled gray */
+    --completed: 142 76% 36%; /* Completed green */
+    --cancelled: 0 0% 45%; /* Cancelled gray */
+  }
+  .dark {
+    /* ScoreDesk Dark Theme - Stadium Night Mode */
+    --background: 210 40% 2%;
+    --foreground: 0 0% 98%;
+    --card: 210 40% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 210 40% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 142 76% 36%; /* Keep green primary */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 210 40% 10%;
+    --muted-foreground: 210 40% 65%;
+    --accent: 45 100% 51%; /* Keep yellow accent */
+    --accent-foreground: 210 40% 2%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 12%;
+    --input: 210 40% 10%;
+    --ring: 142 76% 36%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 210 40% 2%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 98%;
+    /* Chart colors for dark mode */
+    --chart-1: 142 76% 45%; /* Brighter green */
+    --chart-2: 221 83% 63%; /* Brighter blue */
+    --chart-3: 45 100% 61%; /* Brighter yellow */
+    --chart-4: 0 84% 70%; /* Brighter red */
+    --chart-5: 271 81% 66%; /* Brighter purple */
+    /* Match status colors for dark mode */
+    --live: 0 84% 70%;
+    --scheduled: 210 40% 55%;
+    --completed: 142 76% 45%;
+    --cancelled: 0 0% 55%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

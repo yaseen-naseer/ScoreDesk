@@ -1,0 +1,23 @@
+[33mcommit 64033c459efcc579cac84366a90387f072e31fd3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: yaseen-naseer <yaseen_naseer@hotmail.com>
+Date:   Tue Sep 9 17:24:51 2025 +0500
+
+    Initial commit from Create Next App
+
+.gitignore
+README.md
+eslint.config.mjs
+next.config.ts
+package-lock.json
+package.json
+postcss.config.mjs
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
+src/app/favicon.ico
+src/app/globals.css
+src/app/layout.tsx
+src/app/page.tsx
+tsconfig.json

@@ -16,6 +16,7 @@ import { SyncNotification } from '@/components/ui/sync-notification'
 import Polyfills from './polyfills'
 import CrossBrowserCompatibility from '@/components/cross-browser/cross-browser-compatibility'
 import ServiceWorkerProvider from '@/components/providers/service-worker-provider'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -41,13 +42,15 @@ export default function RootLayout({
           Skip to main content
         </a>
         {process.env.NEXT_PUBLIC_ENABLE_PWA === 'true' && (
-          <script dangerouslySetInnerHTML={{ __html: `
-            if ('serviceWorker' in navigator) {
+          <Script id="pwa-register" strategy="afterInteractive">
+            {`if ('serviceWorker' in navigator) {
               window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {})
+                navigator.serviceWorker
+                  .register('/sw.js')
+                  .catch(() => {})
               })
-            }
-          ` }} />
+            }`}
+          </Script>
         )}
         <ThemeProvider
           attribute="class"

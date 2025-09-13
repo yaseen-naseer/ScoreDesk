@@ -1,7 +1,6 @@
-import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/types'
 
-const supabase = createClient()
+// Services should receive supabase client as parameter to avoid multiple instances
 
 type Referee = Database['public']['Tables']['referees']['Row']
 type RefereeInsert = Database['public']['Tables']['referees']['Insert']
@@ -71,6 +70,8 @@ export interface NotificationData {
 }
 
 export class RefereeService {
+  constructor(private supabase: any) {}
+
   /**
    * Create a new referee
    */
@@ -316,12 +317,25 @@ export class RefereeService {
           continue
         }
 
-        // Check availability
-        const { data: isAvailable } = await supabase.rpc('check_referee_availability', {
-          referee_id_param: referee.id,
-          match_date_param: match.scheduled_date,
-          match_duration_minutes: match.match_duration || 90
-        })
+        // Check availability (RPC guard)
+        let isAvailable: any = true
+        try {
+          const rpc = await supabase.rpc('check_referee_availability', {
+            referee_id_param: referee.id,
+            match_date_param: match.scheduled_date,
+            match_duration_minutes: match.match_duration || 90
+          })
+          isAvailable = rpc.data
+        } catch {
+          // Fallback: naive availability (no assignment in last 3 hours)
+          const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+          const { count } = await supabase
+            .from('match_officials')
+            .select('*', { count: 'exact', head: true })
+            .eq('referee_id', referee.id)
+            .gte('assigned_at', since)
+          isAvailable = !count || count === 0
+        }
 
         // Get weekly match count
         const { count: weeklyMatches } = await supabase
@@ -366,12 +380,25 @@ export class RefereeService {
    */
   async assignRefereeToMatch(matchId: string, assignment: RefereeAssignment): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check referee availability
-      const { data: refereeAvailable } = await supabase.rpc('check_referee_availability', {
-        referee_id_param: assignment.referee_id,
-        match_date_param: (await this.getMatchDetails(matchId))?.scheduled_date || '',
-        match_duration_minutes: 90
-      })
+      // Check referee availability (RPC guard)
+      let refereeAvailable = true
+      try {
+        const match = await this.getMatchDetails(matchId)
+        const rpc = await supabase.rpc('check_referee_availability', {
+          referee_id_param: assignment.referee_id,
+          match_date_param: match?.scheduled_date || '',
+          match_duration_minutes: match?.match_duration || 90
+        })
+        refereeAvailable = Boolean(rpc.data)
+      } catch {
+        const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+        const { count } = await supabase
+          .from('match_officials')
+          .select('*', { count: 'exact', head: true })
+          .eq('referee_id', assignment.referee_id)
+          .gte('assigned_at', since)
+        refereeAvailable = !count || count === 0
+      }
 
       if (!refereeAvailable) {
         return {

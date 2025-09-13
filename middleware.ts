@@ -46,14 +46,6 @@ export async function middleware(request: NextRequest) {
   
   // For protected routes, check authentication
   if (isProtectedRoute) {
-    // Get user from the response headers set by updateSession
-    const supabaseResponse = await fetch(request.url, {
-      headers: {
-        ...Object.fromEntries(response.headers.entries()),
-        'x-middleware-request': 'true',
-      },
-    }).catch(() => null)
-    
     // If user is not authenticated, redirect to login
     const authCookie = request.cookies.get('sb-access-token')
     if (!authCookie) {

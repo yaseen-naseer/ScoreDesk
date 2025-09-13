@@ -126,7 +126,7 @@ export default function LoginPage() {
 
           <div className="text-sm">
             <Link
-              href="/reset-password"
+              href="/reset-password" as={`/reset-password` as any}
               className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               Forgot your password?

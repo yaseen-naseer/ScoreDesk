@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "path": "./.next/static/chunks/*.js",
+      "maxSize": "250 kB"
+    },
+    {
+      "path": "./.next/static/css/*.css",
+      "maxSize": "50 kB"
+    }
+  ],
+  "ci": {
+    "trackBranches": ["main", "develop"],
+    "repoOwner": "scoredesk",
+    "repoName": "scoredesk"
+  }
+}

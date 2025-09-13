@@ -23,6 +23,13 @@ test.describe('Navigation', () => {
     expect(response?.status()).toBe(404)
   })
 
+  test('should navigate to Venues page from nav and render heading', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('link', { name: /venues/i }).click()
+    await page.waitForURL(/\/venues$/)
+    await expect(page.getByRole('heading', { name: /venue management/i })).toBeVisible()
+  })
+
   test('should have responsive design', async ({ page }) => {
     await page.goto('/')
     

@@ -1,18 +1,21 @@
-import { createClient } from '@/lib/supabase/client'
-import { Database } from '@/lib/supabase/types'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/lib/supabase/types'
 
-const supabase = createClient()
-
-type Tournament = Database['public']['Tables']['tournaments']['Row']
+export type Tournament = Database['public']['Tables']['tournaments']['Row']
 type TournamentInsert = Database['public']['Tables']['tournaments']['Insert']
 type TournamentUpdate = Database['public']['Tables']['tournaments']['Update']
 type TournamentGroup = Database['public']['Tables']['tournament_groups']['Row']
 type TournamentTeam = Database['public']['Tables']['tournament_teams']['Row']
 
+export interface TournamentTeamWithDetails extends TournamentTeam {
+  team?: Database['public']['Tables']['teams']['Row']
+}
+
 export interface TournamentWithDetails extends Tournament {
   groups?: TournamentGroup[]
-  teams?: TournamentTeam[]
+  teams?: TournamentTeamWithDetails[]
   standings?: Database['public']['Tables']['tournament_standings']['Row'][]
+  status?: string
 }
 
 export interface TournamentCreationData {
@@ -36,11 +39,15 @@ export interface ScheduleGenerationOptions {
 }
 
 export class TournamentService {
+  private supabase = createClientComponentClient<Database>()
+
+  constructor() {}
+
   /**
    * Create a new tournament
    */
   async createTournament(data: TournamentCreationData, organizationId: string): Promise<Tournament> {
-    const { data: tournament, error } = await supabase
+    const { data: tournament, error } = await this.supabase
       .from('tournaments')
       .insert({
         organization_id: organizationId,
@@ -68,7 +75,7 @@ export class TournamentService {
    * Get all tournaments for an organization
    */
   async getTournaments(organizationId: string): Promise<Tournament[]> {
-    const { data: tournaments, error } = await supabase
+    const { data: tournaments, error } = await this.supabase
       .from('tournaments')
       .select('*')
       .eq('organization_id', organizationId)
@@ -86,7 +93,7 @@ export class TournamentService {
    * Get tournament with full details
    */
   async getTournamentWithDetails(tournamentId: string): Promise<TournamentWithDetails | null> {
-    const { data: tournament, error } = await supabase
+    const { data: tournament, error } = await this.supabase
       .from('tournaments')
       .select(`
         *,
@@ -111,7 +118,7 @@ export class TournamentService {
    * Update tournament
    */
   async updateTournament(tournamentId: string, updates: TournamentUpdate): Promise<Tournament> {
-    const { data: tournament, error } = await supabase
+    const { data: tournament, error } = await this.supabase
       .from('tournaments')
       .update(updates)
       .eq('id', tournamentId)
@@ -129,7 +136,7 @@ export class TournamentService {
    * Delete tournament (soft delete)
    */
   async deleteTournament(tournamentId: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from('tournaments')
       .update({ is_active: false })
       .eq('id', tournamentId)
@@ -150,7 +157,7 @@ export class TournamentService {
       advance_teams: group.advance_teams || 2
     }))
 
-    const { data: createdGroups, error } = await supabase
+    const { data: createdGroups, error } = await this.supabase
       .from('tournament_groups')
       .insert(groupData)
       .select()
@@ -166,7 +173,7 @@ export class TournamentService {
    * Register team for tournament
    */
   async registerTeamForTournament(tournamentId: string, teamId: string, groupName?: string): Promise<TournamentTeam> {
-    const { data: registration, error } = await supabase
+    const { data: registration, error } = await this.supabase
       .from('tournament_teams')
       .insert({
         tournament_id: tournamentId,
@@ -200,7 +207,7 @@ export class TournamentService {
     let currentTime = new Date(startDate)
     
     for (const match of matches) {
-      await supabase
+      await this.supabase
         .from('matches')
         .insert({
           tournament_id: options.tournament_id,
@@ -243,7 +250,7 @@ export class TournamentService {
     for (const round of rounds) {
       for (const match of round) {
         if (match.home_team_id && match.away_team_id) {
-          await supabase
+          await this.supabase
             .from('matches')
             .insert({
               tournament_id: options.tournament_id,
@@ -273,7 +280,7 @@ export class TournamentService {
     }
 
     // Get tournament groups
-    const { data: groups, error: groupsError } = await supabase
+    const { data: groups, error: groupsError } = await this.supabase
       .from('tournament_groups')
       .select('*')
       .eq('tournament_id', options.tournament_id)
@@ -288,7 +295,7 @@ export class TournamentService {
 
     for (const group of groups) {
       // Get teams in this group
-      const { data: groupTeams, error: teamsError } = await supabase
+      const { data: groupTeams, error: teamsError } = await this.supabase
         .from('tournament_teams')
         .select('team_id')
         .eq('tournament_id', options.tournament_id)
@@ -302,7 +309,7 @@ export class TournamentService {
       const groupMatches = this.generateRoundRobinMatches(teamIds)
 
       for (const match of groupMatches) {
-        await supabase
+        await this.supabase
           .from('matches')
           .insert({
             tournament_id: options.tournament_id,

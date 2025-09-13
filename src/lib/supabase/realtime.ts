@@ -84,6 +84,7 @@ export class RealtimeManager {
       onMatchUpdate?: (payload: RealtimePayload<'matches'>) => void
       onEventCreate?: (payload: RealtimePayload<'match_events'>) => void
       onStatsUpdate?: (payload: RealtimePayload<'match_statistics'>) => void
+      onPlayerStatsUpdate?: (payload: RealtimePayload<'player_statistics'>) => void
       onLineupChange?: (payload: RealtimePayload<'match_lineups'>) => void
       onError?: SubscriptionErrorCallback
     }
@@ -118,6 +119,16 @@ export class RealtimeManager {
         { event: '*', filter: `match_id=eq.${matchId}` }
       )
       unsubscribeFunctions.push(unsubStats)
+    }
+
+    // Subscribe to player statistics updates
+    if (callbacks.onPlayerStatsUpdate) {
+      const unsubPlayerStats = this.subscribeToTable(
+        'player_statistics',
+        callbacks.onPlayerStatsUpdate,
+        { event: '*', filter: `match_id=eq.${matchId}` }
+      )
+      unsubscribeFunctions.push(unsubPlayerStats)
     }
 
     // Subscribe to lineup changes

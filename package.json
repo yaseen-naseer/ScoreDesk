@@ -20,7 +20,20 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "analyze": "ANALYZE=true next build",
+    "analyze:server": "BUNDLE_ANALYZE=server next build",
+    "analyze:browser": "BUNDLE_ANALYZE=browser next build",
+    "build:analyze": "npm run build && npm run analyze",
+    "perf:audit": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html",
+    "perf:budget": "bundlesize",
+    "test:webkit": "playwright test --project=webkit --reporter=line",
+    "test:cross-browser": "playwright test tests/e2e/cross-browser.spec.ts tests/e2e/css-compatibility.spec.ts tests/e2e/javascript-compatibility.spec.ts tests/e2e/browser-specific.spec.ts --reporter=html",
+    "test:cross-browser:all": "playwright test --reporter=html",
+    "test:cross-browser:chrome": "playwright test --project=chromium --reporter=html",
+    "test:cross-browser:firefox": "playwright test --project=firefox --reporter=html",
+    "test:cross-browser:safari": "playwright test --project=webkit --reporter=html",
+    "test:cross-browser:mobile": "playwright test --project=\"Mobile Chrome\" --project=\"Mobile Safari\" --reporter=html"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -62,8 +75,9 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.1",
-    "@testing-library/jest-dom": "^6.1.5",
+    "@next/bundle-analyzer": "^14.2.5",
+    "@playwright/test": "^1.55.0",
+    "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
     "@types/jest": "^29.5.8",
@@ -73,16 +87,45 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "autoprefixer": "^10.4.19",
+    "bundlesize": "^0.18.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "husky": "^8.0.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "lighthouse": "^11.7.0",
     "lint-staged": "^15.2.2",
     "postcss": "^8.4.39",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "web-vitals": "^3.5.0"
+  },
+  "optionalDependencies": {
+    "intersection-observer": "^0.12.2",
+    "smoothscroll-polyfill": "^0.4.4",
+    "resize-observer-polyfill": "^1.5.1",
+    "@webcomponents/custom-elements": "^1.7.0",
+    "css-vars-ponyfill": "^2.4.7",
+    "whatwg-fetch": "^3.6.2",
+    "es6-promise": "^4.2.8",
+    "url-polyfill": "^1.1.12",
+    "text-encoding": "^0.7.0",
+    "web-animations-js": "^2.3.2"
+  }
+  ,
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "last 2 versions",
+      "Firefox ESR",
+      "not dead"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

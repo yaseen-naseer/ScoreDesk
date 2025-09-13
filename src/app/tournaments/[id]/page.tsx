@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { tournamentService, TournamentWithDetails } from '@/lib/services/tournament-service'
-import { TournamentScheduleGenerator, TournamentRegistrationManager, TournamentTeamRegistration } from '@/components/tournament'
+import { TournamentScheduleGenerator, TournamentRegistrationManager, TournamentTeamRegistration, TournamentRulesSettings, TournamentBracket, ScheduleOptimizationPanel, TournamentWorkflowManager, RegistrationDeadlineManager, TournamentBracketVisualizer, StandingsTable, EntryRequirementsManager, PrizeConfigurationManager, TournamentSeedingManager, TournamentGroupManager, GroupAdvancementRulesManager, TournamentRulesEnforcement } from '@/components/tournament'
 
 interface TournamentDetailsPageProps {
   params: {
@@ -167,8 +167,8 @@ export default function TournamentDetailsPage({ params }: TournamentDetailsPageP
               <span>{tournament.name}</span>
             </h1>
             <div className="flex items-center space-x-4 mt-2">
-              <Badge variant={getStatusColor(tournament.status)}>
-                {tournament.status}
+              <Badge variant={getStatusColor(tournament.status || 'draft')}>
+                {tournament.status || 'draft'}
               </Badge>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <span>{getSportIcon(tournament.sport)}</span>
@@ -212,9 +212,15 @@ export default function TournamentDetailsPage({ params }: TournamentDetailsPageP
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="workflow">Workflow</TabsTrigger>
+              <TabsTrigger value="registration">Registration</TabsTrigger>
               <TabsTrigger value="teams">Teams</TabsTrigger>
+              <TabsTrigger value="groups">Groups</TabsTrigger>
+              <TabsTrigger value="seeding">Seeding</TabsTrigger>
               <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="bracket">Bracket</TabsTrigger>
               <TabsTrigger value="standings">Standings</TabsTrigger>
+              <TabsTrigger value="settings">Rules & Settings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
@@ -261,14 +267,30 @@ export default function TournamentDetailsPage({ params }: TournamentDetailsPageP
               </Card>
             </TabsContent>
 
+            <TabsContent value="workflow" className="space-y-4">
+              <TournamentWorkflowManager 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+                onStatusChange={loadTournament}
+              />
+            </TabsContent>
+
+            <TabsContent value="registration" className="space-y-4">
+              <RegistrationDeadlineManager 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+                onDeadlineChange={loadTournament}
+              />
+            </TabsContent>
+
             <TabsContent value="teams" className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Team Registration */}
                 <TournamentTeamRegistration
                   tournamentId={tournament.id}
                   tournamentName={tournament.name}
-                  maxTeams={tournament.max_teams}
-                  registrationDeadline={tournament.registration_deadline}
+                  maxTeams={tournament.max_teams || undefined}
+                  registrationDeadline={tournament.registration_deadline || undefined}
                   onRegistrationComplete={loadTournament}
                 />
                 
@@ -276,53 +298,134 @@ export default function TournamentDetailsPage({ params }: TournamentDetailsPageP
                 <TournamentRegistrationManager
                   tournamentId={tournament.id}
                   tournamentName={tournament.name}
-                  maxTeams={tournament.max_teams}
+                  maxTeams={tournament.max_teams || undefined}
                 />
               </div>
             </TabsContent>
 
-            <TabsContent value="schedule" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Match Schedule</CardTitle>
-                  <CardDescription>
-                    Tournament match schedule and fixtures
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Schedule not generated</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Generate the tournament schedule to see match fixtures
-                    </p>
-                    <Button>
-                      <Play className="h-4 w-4 mr-2" />
-                      Generate Schedule
-                    </Button>
+            <TabsContent value="groups" className="space-y-4">
+              <div className="space-y-6">
+                {/* Group Management */}
+                <TournamentGroupManager
+                  tournamentId={tournament.id}
+                  tournamentName={tournament.name}
+                  tournamentFormat={tournament.format}
+                  onGroupsUpdated={loadTournament}
+                />
+                
+                {/* Advancement Rules for each group */}
+                {tournament.groups && tournament.groups.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Group Advancement Rules</h3>
+                    {tournament.groups.map((group) => (
+                      <GroupAdvancementRulesManager
+                        key={group.id}
+                        tournamentId={tournament.id}
+                        groupId={group.id}
+                        groupName={group.name}
+                        onRulesUpdated={loadTournament}
+                      />
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="seeding" className="space-y-4">
+              <TournamentSeedingManager
+                tournamentId={tournament.id}
+                tournamentName={tournament.name}
+                registeredTeams={(tournament.teams as any)?.map((tt: any) => ({
+                  id: tt.team_id,
+                  name: tt.team?.name || 'Unknown Team',
+                  logo_url: tt.team?.logo_url
+                })) || []}
+                onSeedingComplete={loadTournament}
+              />
+            </TabsContent>
+
+            <TabsContent value="schedule" className="space-y-4">
+              <div className="space-y-6">
+                {/* Schedule Generation */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Match Schedule</CardTitle>
+                    <CardDescription>
+                      Tournament match schedule and fixtures
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Schedule not generated</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Generate the tournament schedule to see match fixtures
+                      </p>
+                      <Button>
+                        <Play className="h-4 w-4 mr-2" />
+                        Generate Schedule
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Schedule Optimization */}
+                <ScheduleOptimizationPanel 
+                  tournamentId={params.id}
+                  tournamentName={tournament?.name || 'Tournament'}
+                  onOptimizationComplete={(result: any) => {
+                    toast({
+                      title: 'Optimization Complete',
+                      description: `Schedule optimized with ${result.total_improvement_score}% improvement`,
+                      variant: 'default'
+                    })
+                  }}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="bracket" className="space-y-4">
+              <TournamentBracketVisualizer 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+                onMatchClick={(matchId: string) => {
+                  // Navigate to match details
+                  router.push(`/matches/${matchId}` as any)
+                }}
+                onBracketUpdate={loadTournament}
+              />
             </TabsContent>
 
             <TabsContent value="standings" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tournament Standings</CardTitle>
-                  <CardDescription>
-                    Current tournament standings and rankings
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No standings available</h3>
-                    <p className="text-muted-foreground">
-                      Standings will be available once matches are played
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <StandingsTable 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+              />
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <TournamentRulesEnforcement 
+                tournamentId={params.id}
+                onComplianceChange={(isCompliant: boolean) => {
+                  // Handle compliance change if needed
+                  console.log('Tournament compliance:', isCompliant)
+                }}
+              />
+              <TournamentRulesSettings 
+                tournamentId={params.id} 
+                tournament={tournament}
+                onUpdate={loadTournament}
+              />
+              <EntryRequirementsManager 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+                onUpdate={loadTournament}
+              />
+              <PrizeConfigurationManager 
+                tournamentId={params.id}
+                tournamentName={tournament?.name || 'Tournament'}
+                onUpdate={loadTournament}
+              />
             </TabsContent>
           </Tabs>
         </div>

@@ -206,7 +206,7 @@ export default function TournamentsPage() {
                       <DropdownMenuItem onClick={() => router.push(`/tournaments/${tournament.id}`)}>
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/tournaments/${tournament.id}/edit`)}>
+                      <DropdownMenuItem onClick={() => router.push(`/tournaments/${tournament.id}/edit` as any)}>
                         Edit Tournament
                       </DropdownMenuItem>
                       <DropdownMenuItem 

@@ -7,12 +7,14 @@ import type { Database } from '@/lib/supabase/types'
 type Match = Database['public']['Tables']['matches']['Row']
 type MatchEvent = Database['public']['Tables']['match_events']['Row']
 type MatchStatistics = Database['public']['Tables']['match_statistics']['Row']
+type PlayerStatistics = Database['public']['Tables']['player_statistics']['Row']
 type MatchLineup = Database['public']['Tables']['match_lineups']['Row']
 
 interface LiveMatchData {
   match: Match | null
   events: MatchEvent[]
   statistics: MatchStatistics[]
+  playerStatistics: PlayerStatistics[]
   lineups: MatchLineup[]
   isConnected: boolean
   connectionStatus: string
@@ -22,6 +24,7 @@ interface LiveMatchCallbacks {
   onMatchUpdate?: (match: Match) => void
   onNewEvent?: (event: MatchEvent) => void
   onStatsUpdate?: (stats: MatchStatistics) => void
+  onPlayerStatsUpdate?: (playerStats: PlayerStatistics) => void
   onLineupChange?: (lineup: MatchLineup) => void
   onConnectionChange?: (isConnected: boolean) => void
 }
@@ -34,6 +37,7 @@ export function useLiveMatch(matchId: string, callbacks?: LiveMatchCallbacks) {
     match: null,
     events: [],
     statistics: [],
+    playerStatistics: [],
     lineups: [],
     isConnected: false,
     connectionStatus: 'disconnected',
@@ -63,6 +67,17 @@ export function useLiveMatch(matchId: string, callbacks?: LiveMatchCallbacks) {
       ),
     }))
     callbacks?.onStatsUpdate?.(stats)
+  }, [callbacks])
+
+  // Update player statistics
+  const updatePlayerStats = useCallback((playerStats: PlayerStatistics) => {
+    setData(prev => ({
+      ...prev,
+      playerStatistics: prev.playerStatistics.map(p => 
+        p.player_id === playerStats.player_id ? playerStats : p
+      ),
+    }))
+    callbacks?.onPlayerStatsUpdate?.(playerStats)
   }, [callbacks])
 
   // Update lineup
@@ -107,6 +122,12 @@ export function useLiveMatch(matchId: string, callbacks?: LiveMatchCallbacks) {
         }
         updateConnection(true)
       },
+      onPlayerStatsUpdate: (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          updatePlayerStats(payload.new as PlayerStatistics)
+        }
+        updateConnection(true)
+      },
       onLineupChange: (payload) => {
         updateLineup(payload.new as MatchLineup)
         updateConnection(true)
@@ -117,7 +138,7 @@ export function useLiveMatch(matchId: string, callbacks?: LiveMatchCallbacks) {
     setTimeout(() => updateConnection(true), 1000)
 
     return unsubscribe
-  }, [matchId, updateMatch, addEvent, updateStats, updateLineup, updateConnection])
+  }, [matchId, updateMatch, addEvent, updateStats, updatePlayerStats, updateLineup, updateConnection])
 
   return {
     ...data,

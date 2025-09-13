@@ -62,25 +62,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setUser(userProfile)
 
-        // TODO: Load organization memberships from database
-        // This will be implemented when we create the database tables
-        // For now, we'll use mock data for development
-        const mockMemberships: OrganizationMembership[] = []
-        setMemberships(mockMemberships)
+        // Load organization memberships from database
+        const { data: membershipsData, error: membershipsError } = await supabase
+          .from('organization_memberships')
+          .select(`
+            id,
+            organization_id,
+            role,
+            is_active,
+            joined_at,
+            organizations (
+              id,
+              name,
+              slug,
+              logo_url
+            )
+          `)
+          .eq('user_id', supabaseUser.id)
+          .eq('is_active', true)
+
+        if (membershipsError) {
+          console.error('Error loading organization memberships:', membershipsError)
+          setMemberships([])
+        } else {
+          const memberships: OrganizationMembership[] = (membershipsData || []).map(m => ({
+            id: m.id,
+            userId: supabaseUser.id,
+            organizationId: m.organization_id,
+            role: m.role as UserRole,
+            isActive: m.is_active,
+            joinedAt: m.joined_at,
+          }))
+          setMemberships(memberships)
+        }
 
         // Try to restore current organization from session
         const { sessionManager } = await import('@/lib/auth/session-manager')
         const storedOrgId = sessionManager.getCurrentOrganization()
         
-        if (storedOrgId && mockMemberships.length > 0) {
-          const membership = mockMemberships.find(m => m.organizationId === storedOrgId && m.isActive)
+        if (storedOrgId && memberships.length > 0) {
+          const membership = memberships.find(m => m.organizationId === storedOrgId && m.isActive)
           if (membership) {
             setCurrentOrganization(storedOrgId)
             setCurrentRole(membership.role)
           }
-        } else if (mockMemberships.length > 0) {
+        } else if (memberships.length > 0) {
           // Set current organization to the first one (if any)
-          const firstMembership = mockMemberships[0]
+          const firstMembership = memberships[0]
           setCurrentOrganization(firstMembership.organizationId)
           setCurrentRole(firstMembership.role)
           sessionManager.saveCurrentOrganization(firstMembership.organizationId)

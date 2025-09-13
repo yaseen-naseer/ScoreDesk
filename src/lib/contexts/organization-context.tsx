@@ -26,6 +26,9 @@ interface OrganizationContextType {
   // User's organizations
   userOrganizations: Array<Organization & { membership: OrganizationMembership }>
   
+  // User role in current organization
+  userRole: string | null
+  
   // Loading states
   isLoading: boolean
   isLoadingStats: boolean
@@ -226,6 +229,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     currentMembership,
     organizationStats,
     userOrganizations,
+    userRole,
     
     // Loading states
     isLoading,

@@ -721,7 +721,7 @@ class PlayerService {
     // Calculate age
     const birthDate = new Date(player.date_of_birth)
     const today = new Date()
-    const age = today.getFullYear() - birthDate.getFullYear()
+    let age = today.getFullYear() - birthDate.getFullYear()
     
     // Adjust if birthday hasn't occurred this year
     if (today.getMonth() < birthDate.getMonth() || 

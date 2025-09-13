@@ -17,6 +17,7 @@ import { teamService, TeamProfile } from '@/lib/services/team-service'
 import { tournamentService, Tournament } from '@/lib/services/tournament-service'
 import { useOrganization } from '@/lib/contexts/organization-context'
 import { createClient } from '@/lib/supabase/client'
+import { ConflictDetectionPanel } from './conflict-detection-panel'
 
 const supabase = createClient()
 
@@ -52,6 +53,7 @@ export function MatchCreationForm({
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [hasConflicts, setHasConflicts] = useState(false)
 
   useEffect(() => {
     if (currentOrganization) {
@@ -376,17 +378,37 @@ export function MatchCreationForm({
             />
           </div>
 
+          {/* Conflict Detection */}
+          <ConflictDetectionPanel
+            matchData={{
+              tournament_id: formData.tournament_id,
+              home_team_id: formData.home_team_id,
+              away_team_id: formData.away_team_id,
+              scheduled_date: formData.scheduled_date,
+              venue_id: formData.venue_id,
+              venue: formData.venue,
+              match_duration: formData.match_duration
+            }}
+            onConflictsFound={() => setHasConflicts(true)}
+            onConflictsResolved={() => setHasConflicts(false)}
+          />
+
           {/* Form Actions */}
           <div className="flex space-x-4 pt-4">
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || hasConflicts}
               className="flex-1"
             >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating Match...
+                </>
+              ) : hasConflicts ? (
+                <>
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Resolve Conflicts to Continue
                 </>
               ) : (
                 <>

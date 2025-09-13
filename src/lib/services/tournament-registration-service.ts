@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase/types'
 
-const supabase = createClient()
+// Services should receive supabase client as parameter to avoid multiple instances
 
 type TournamentTeam = Database['public']['Tables']['tournament_teams']['Row']
 type TournamentTeamInsert = Database['public']['Tables']['tournament_teams']['Insert']
@@ -50,13 +50,15 @@ export interface TournamentRegistrationFilters {
 }
 
 export class TournamentRegistrationService {
+  private supabase = createClientComponentClient<Database>()
+
   /**
    * Register a team for a tournament
    */
   async registerTeamForTournament(data: TournamentRegistrationData): Promise<{ success: boolean; registration?: TournamentRegistration; error?: string }> {
     try {
       // Check if team is already registered
-      const { data: existingRegistration } = await supabase
+      const { data: existingRegistration } = await this.supabase
         .from('tournament_teams')
         .select('id')
         .eq('tournament_id', data.tournament_id)
@@ -71,14 +73,14 @@ export class TournamentRegistrationService {
       }
 
       // Check tournament capacity
-      const { data: tournament } = await supabase
+      const { data: tournament } = await this.supabase
         .from('tournaments')
         .select('max_teams, name')
         .eq('id', data.tournament_id)
         .single()
 
       if (tournament?.max_teams) {
-        const { count: currentRegistrations } = await supabase
+        const { count: currentRegistrations } = await this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', data.tournament_id)
@@ -93,7 +95,7 @@ export class TournamentRegistrationService {
       }
 
       // Register team
-      const { data: registration, error } = await supabase
+      const { data: registration, error } = await this.supabase
         .from('tournament_teams')
         .insert({
           tournament_id: data.tournament_id,
@@ -137,7 +139,7 @@ export class TournamentRegistrationService {
    */
   async getTournamentRegistrations(filters: TournamentRegistrationFilters): Promise<TournamentRegistration[]> {
     try {
-      let query = supabase
+      let query = this.supabase
         .from('tournament_teams')
         .select(`
           *,
@@ -276,26 +278,26 @@ export class TournamentRegistrationService {
   }> {
     try {
       const [total, pending, approved, rejected, tournament] = await Promise.all([
-        supabase
+        this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournamentId),
-        supabase
+        this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournamentId)
           .eq('registration_status', 'pending'),
-        supabase
+        this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournamentId)
           .eq('registration_status', 'approved'),
-        supabase
+        this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournamentId)
           .eq('registration_status', 'rejected'),
-        supabase
+        this.supabase
           .from('tournaments')
           .select('max_teams')
           .eq('id', tournamentId)
@@ -330,7 +332,7 @@ export class TournamentRegistrationService {
   async canTeamRegister(tournamentId: string, teamId: string): Promise<{ canRegister: boolean; reason?: string }> {
     try {
       // Check if already registered
-      const { data: existingRegistration } = await supabase
+      const { data: existingRegistration } = await this.supabase
         .from('tournament_teams')
         .select('id, registration_status')
         .eq('tournament_id', tournamentId)
@@ -350,14 +352,14 @@ export class TournamentRegistrationService {
       }
 
       // Check tournament capacity
-      const { data: tournament } = await supabase
+      const { data: tournament } = await this.supabase
         .from('tournaments')
         .select('max_teams, registration_deadline, start_date')
         .eq('id', tournamentId)
         .single()
 
       if (tournament?.max_teams) {
-        const { count: approvedRegistrations } = await supabase
+        const { count: approvedRegistrations } = await this.supabase
           .from('tournament_teams')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournamentId)

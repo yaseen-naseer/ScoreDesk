@@ -11,19 +11,6 @@ const PUBLIC_ROUTES = [
   '/auth/auth-code-error',
 ]
 
-// Routes that require authentication
-const PROTECTED_ROUTES = [
-  '/dashboard',
-  '/organizations',
-  '/tournaments',
-  '/teams',
-  '/players',
-  '/matches',
-  '/stats',
-  '/reports',
-  '/settings',
-]
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
@@ -35,18 +22,7 @@ export async function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(`${route}/`)
   )
   
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => 
-    pathname.startsWith(route)
-  )
-  
-  // If it's a public route, allow access
-  if (isPublicRoute) {
-    return response
-  }
-  
-  // For protected routes, check authentication
-  if (isProtectedRoute) {
-    // If user is not authenticated, redirect to login
+  if (!isPublicRoute) {
     const authCookie = request.cookies.get('sb-access-token')
     if (!authCookie) {
       const loginUrl = new URL('/login', request.url)
@@ -54,7 +30,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
   }
-  
+
   return response
 }
 
